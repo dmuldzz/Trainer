@@ -231,6 +231,73 @@ body{color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;max-width
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fu{animation:fadeUp .22s ease forwards}
+
+/* ══ PROTEIN ════════════════════════════════════════════════════════════════ */
+#prot-view{display:none;flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch}
+#prot-view.on{display:block}
+#prot-view::-webkit-scrollbar{display:none}
+
+.prot-ring-wrap{display:flex;flex-direction:column;align-items:center;padding:22px 0 16px}
+.prot-ring{position:relative;width:160px;height:160px}
+.prot-ring svg{width:160px;height:160px;transform:rotate(-90deg)}
+.prot-ring-track{fill:none;stroke:var(--s3);stroke-width:10}
+.prot-ring-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .5s cubic-bezier(.4,0,.2,1),stroke .4s}
+.prot-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.prot-ring-val{font-family:'Instrument Serif',serif;font-style:italic;font-size:36px;color:var(--text);line-height:1}
+.prot-ring-goal{font-size:11px;color:var(--muted);margin-top:3px}
+.prot-ring-pct{font-size:12px;font-weight:500;color:var(--text2);margin-top:8px}
+
+.prot-date{font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center;margin-bottom:20px}
+
+/* Quick add */
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.quick-btn{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center;cursor:pointer;transition:background .12s;-webkit-user-select:none}
+.quick-btn:active{background:var(--s2)}
+.quick-btn-name{font-size:12px;font-weight:500;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-btn-g{font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;color:var(--text);line-height:1.1}
+.quick-add-btn{background:transparent;border:1px dashed var(--border2);border-radius:var(--r-sm);padding:10px 8px;text-align:center;cursor:pointer;color:var(--muted);font-size:20px;display:flex;align-items:center;justify-content:center}
+
+/* Add entry form */
+.prot-form{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.prot-form-row{display:flex;gap:8px;margin-bottom:8px}
+.prot-input{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;outline:none;-webkit-appearance:none}
+.prot-input:focus{border-color:var(--text2)}
+.prot-input.grams{width:80px;flex:none}
+.prot-add-btn{background:var(--text);color:var(--bg);border:none;border-radius:var(--r-sm);padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.prot-add-btn:active{opacity:.8}
+
+/* Log entries */
+.prot-entry{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.prot-entry:last-child{border-bottom:none}
+.prot-entry-name{font-size:14px;color:var(--text2)}
+.prot-entry-time{font-size:11px;color:var(--muted);margin-top:2px}
+.prot-entry-right{display:flex;align-items:center;gap:10px}
+.prot-entry-g{font-family:'Instrument Serif',serif;font-style:italic;font-size:20px;color:var(--text)}
+.prot-del{background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer;padding:0 2px;line-height:1}
+.prot-empty{text-align:center;padding:30px 20px;color:var(--muted);font-size:13px}
+
+/* Quick add manager sheet */
+.qa-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.qa-row:last-child{border-bottom:none}
+.qa-name{flex:1;font-size:14px;color:var(--text2)}
+.qa-g{font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;color:var(--text);margin-right:4px}
+.qa-del{background:none;border:none;color:var(--muted2);font-size:18px;cursor:pointer;line-height:1}
+.qa-form{display:flex;gap:8px;padding-top:14px}
+.qa-input{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;outline:none}
+.qa-input:focus{border-color:var(--text2)}
+.qa-input.g{width:72px;flex:none}
+.qa-save{background:var(--text);color:var(--bg);border:none;border-radius:var(--r-sm);padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* Protein history stats */
+.prot-hist-bar-wrap{margin-bottom:10px}
+.prot-hist-bar-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.prot-hist-bar-row:last-child{border-bottom:none}
+.prot-hist-day{font-size:12px;color:var(--muted);width:32px;flex-shrink:0}
+.prot-hist-bar-track{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.prot-hist-bar-fill{height:100%;border-radius:3px;background:var(--text2);transition:width .4s}
+.prot-hist-bar-fill.hit{background:var(--text)}
+.prot-hist-val{font-size:12px;color:var(--text2);width:36px;text-align:right;flex-shrink:0}
+
 </style>
 </head>
 <body>
@@ -275,6 +342,41 @@ body{color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;max-width
   <!-- Today -->
   <div class="scroll" id="today-view"><div id="day-content" class="fu"></div></div>
 
+
+  <!-- Protein -->
+  <div id="prot-view">
+    <div class="prot-ring-wrap">
+      <div class="prot-ring">
+        <svg viewBox="0 0 160 160">
+          <circle class="prot-ring-track" cx="80" cy="80" r="70"/>
+          <circle class="prot-ring-fill" id="prot-ring-fill" cx="80" cy="80" r="70"
+            stroke-dasharray="439.82" stroke-dashoffset="439.82" stroke="var(--text2)"/>
+        </svg>
+        <div class="prot-ring-center">
+          <div class="prot-ring-val" id="prot-total">0g</div>
+          <div class="prot-ring-goal" id="prot-goal-lbl">of 165g</div>
+        </div>
+      </div>
+      <div class="prot-ring-pct" id="prot-pct">0% of daily goal</div>
+    </div>
+    <div class="prot-date" id="prot-date-lbl"></div>
+
+    <div class="sec">Quick Add</div>
+    <div class="quick-grid" id="quick-grid"></div>
+
+    <div class="sec">Log Entry</div>
+    <div class="prot-form">
+      <div class="prot-form-row">
+        <input class="prot-input" id="prot-food" placeholder="Food or drink" type="text">
+        <input class="prot-input grams" id="prot-grams" placeholder="g" type="number" min="0" max="999">
+      </div>
+      <button class="prot-add-btn" style="width:100%" onclick="addProteinEntry()">Add</button>
+    </div>
+
+    <div class="sec">Today's Log</div>
+    <div class="cgroup" id="prot-log"></div>
+  </div>
+
   <!-- History -->
   <div id="hist-view">
     <div class="view-title">History</div>
@@ -315,6 +417,10 @@ body{color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;max-width
     <button class="bnav-btn" id="nav-history" onclick="showView('history')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       History
+    </button>
+    <button class="bnav-btn" id="nav-protein" onclick="showView('protein')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="6" y1="3" x2="6" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="7" y2="6"/><line x1="17" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="7" y2="18"/><line x1="17" y1="18" x2="21" y2="18"/></svg>
+      Protein
     </button>
     <button class="bnav-btn" id="nav-settings" onclick="showView('settings')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -936,6 +1042,294 @@ function clearAll(){
 }
 
 init();
+
+// ══ PROTEIN ══════════════════════════════════════════════════════════════════
+const PK = {
+  goal:    'tr_prot_goal',    // number
+  log:     'tr_prot_log',     // { dateKey: [{id,name,grams,time}] }
+  quick:   'tr_prot_quick',   // [{id,name,grams}]
+};
+
+const PROT_CIRCUMFERENCE = 2 * Math.PI * 70; // 439.82
+
+function getProtGoal(){ return lsGet(PK.goal, 165); }
+function setProtGoal(v){ lsSet(PK.goal, v); }
+
+// Date key — resets at 3am EDT (UTC-4)
+function protDayKey(){
+  const now = new Date();
+  // Shift back 3 hours so day flips at 3am
+  const adjusted = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  // Also account for EDT offset: EDT = UTC-4, so UTC hour - 4
+  // We compare in local time but shift by 3h to make midnight = 3am real time
+  return adjusted.toLocaleDateString('en-CA'); // YYYY-MM-DD
+}
+
+function getProtLog(){
+  const all = lsGet(PK.log, {});
+  return all[protDayKey()] || [];
+}
+function setProtLog(entries){
+  const all = lsGet(PK.log, {});
+  all[protDayKey()] = entries;
+  lsSet(PK.log, all);
+}
+function getAllProtLog(){ return lsGet(PK.log, {}); }
+
+function getQuickItems(){ return lsGet(PK.quick, [
+  {id:'q1', name:'Protein Shake', grams:35},
+  {id:'q2', name:'Chicken Breast', grams:45},
+  {id:'q3', name:'Greek Yogurt', grams:17},
+  {id:'q4', name:'Eggs (2)', grams:12},
+  {id:'q5', name:'Cottage Cheese', grams:25},
+]); }
+function setQuickItems(items){ lsSet(PK.quick, items); }
+
+function protTotal(entries){ return entries.reduce((s,e) => s + Number(e.grams), 0); }
+
+function renderProtein(){
+  const entries = getProtLog();
+  const goal = getProtGoal();
+  const total = protTotal(entries);
+  const pct = Math.min(total / goal, 1);
+  const offset = PROT_CIRCUMFERENCE * (1 - pct);
+
+  // Ring
+  const fill = document.getElementById('prot-ring-fill');
+  if(fill){
+    fill.style.strokeDashoffset = offset;
+    // Colour: dim at 0%, brightens as you approach goal, full white at 100%
+    const brightness = Math.round(120 + pct * 120);
+    fill.style.stroke = pct >= 1
+      ? 'var(--text)'
+      : `rgb(${brightness},${brightness},${brightness})`;
+  }
+  const el = id => document.getElementById(id);
+  if(el('prot-total')) el('prot-total').textContent = total + 'g';
+  if(el('prot-goal-lbl')) el('prot-goal-lbl').textContent = 'of ' + goal + 'g';
+  if(el('prot-pct')) el('prot-pct').textContent = Math.round(pct*100) + '% of daily goal';
+
+  // Date label
+  const now = new Date();
+  if(el('prot-date-lbl')){
+    el('prot-date-lbl').textContent = now.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
+  }
+
+  // Quick grid
+  renderQuickGrid();
+
+  // Log
+  const logEl = document.getElementById('prot-log');
+  if(!logEl) return;
+  if(entries.length === 0){
+    logEl.innerHTML = '<div class="prot-empty">No entries yet today.</div>';
+  } else {
+    logEl.innerHTML = entries.map((e,i) => `
+      <div class="prot-entry" id="pe-${i}">
+        <div>
+          <div class="prot-entry-name">${e.name||'—'}</div>
+          <div class="prot-entry-time">${e.time}</div>
+        </div>
+        <div class="prot-entry-right">
+          <div class="prot-entry-g">${e.grams}g</div>
+          <button class="prot-del" onclick="deleteProtEntry(${i})">×</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function renderQuickGrid(){
+  const items = getQuickItems();
+  const el = document.getElementById('quick-grid');
+  if(!el) return;
+  el.innerHTML = items.map(item => `
+    <div class="quick-btn" onclick="quickAdd('${item.id}')">
+      <div class="quick-btn-name">${item.name}</div>
+      <div class="quick-btn-g">${item.grams}g</div>
+    </div>`).join('') +
+    `<div class="quick-add-btn" onclick="openQuickManager()">+</div>`;
+}
+
+function quickAdd(id){
+  const items = getQuickItems();
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+  addEntry(item.name, item.grams);
+}
+
+function addProteinEntry(){
+  const nameEl = document.getElementById('prot-food');
+  const gramsEl = document.getElementById('prot-grams');
+  const name = (nameEl.value||'').trim();
+  const grams = parseInt(gramsEl.value);
+  if(!name || isNaN(grams) || grams <= 0) return;
+  addEntry(name, grams);
+  nameEl.value = '';
+  gramsEl.value = '';
+}
+
+function addEntry(name, grams){
+  const entries = getProtLog();
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-CA',{hour:'numeric',minute:'2-digit'});
+  entries.push({id: Date.now(), name, grams: Number(grams), time});
+  setProtLog(entries);
+  renderProtein();
+}
+
+function deleteProtEntry(i){
+  const entries = getProtLog();
+  entries.splice(i, 1);
+  setProtLog(entries);
+  renderProtein();
+}
+
+// ── Quick item manager sheet ──────────────────────────────────────────────────
+function openQuickManager(){
+  const items = getQuickItems();
+  let body = '<div style="padding-bottom:8px">';
+  if(items.length === 0){
+    body += '<div style="color:var(--muted);font-size:13px;padding:12px 0">No saved items yet.</div>';
+  }
+  items.forEach((item,i) => {
+    body += `<div class="qa-row">
+      <span class="qa-name">${item.name}</span>
+      <span class="qa-g">${item.grams}g</span>
+      <button class="qa-del" onclick="deleteQuickItem('${item.id}')">×</button>
+    </div>`;
+  });
+  body += `</div>
+  <div class="qa-form">
+    <input class="qa-input" id="qa-name" placeholder="Item name" type="text">
+    <input class="qa-input g" id="qa-grams" placeholder="g" type="number" min="1" max="999">
+    <button class="qa-save" onclick="saveQuickItem()">Add</button>
+  </div>`;
+
+  document.getElementById('pop-eye').textContent = 'Protein';
+  document.getElementById('pop-title').textContent = 'Quick Add Items';
+  document.getElementById('pop-sub').textContent = 'Tap × to remove, or add a new item below';
+  document.getElementById('pop-body').innerHTML = body;
+  document.getElementById('popup').classList.add('on');
+}
+
+function deleteQuickItem(id){
+  const items = getQuickItems().filter(i => i.id !== id);
+  setQuickItems(items);
+  openQuickManager(); // re-render sheet
+  renderQuickGrid();
+}
+
+function saveQuickItem(){
+  const name = (document.getElementById('qa-name').value||'').trim();
+  const grams = parseInt(document.getElementById('qa-grams').value);
+  if(!name || isNaN(grams) || grams <= 0) return;
+  const items = getQuickItems();
+  items.push({id: 'q' + Date.now(), name, grams});
+  setQuickItems(items);
+  openQuickManager();
+  renderQuickGrid();
+}
+
+// ── Protein history stats ─────────────────────────────────────────────────────
+function renderProteinHistory(){
+  const allLog = getAllProtLog();
+  const goal = getProtGoal();
+
+  // Build last 7 days
+  const days = [];
+  for(let i = 6; i >= 0; i--){
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toLocaleDateString('en-CA');
+    const entries = allLog[key] || [];
+    const total = protTotal(entries);
+    days.push({
+      label: d.toLocaleDateString('en-CA',{weekday:'short'}),
+      key, total, hit: total >= goal
+    });
+  }
+
+  const daysHit = days.filter(d => d.hit).length;
+  const avg = Math.round(days.reduce((s,d)=>s+d.total,0) / 7);
+  const best = Math.max(...days.map(d=>d.total));
+  const maxBar = Math.max(goal * 1.2, best, 1);
+
+  let h = '';
+  h += `<div class="vsec">Protein — last 7 days</div>`;
+  h += `<div class="stat-grid">
+    <div class="stat-card"><div class="stat-val">${daysHit}/7</div><div class="stat-lbl">Goal days hit</div></div>
+    <div class="stat-card"><div class="stat-val">${avg}g</div><div class="stat-lbl">7-day average</div></div>
+    <div class="stat-card"><div class="stat-val">${best}g</div><div class="stat-lbl">Best day</div></div>
+    <div class="stat-card"><div class="stat-val">${goal}g</div><div class="stat-lbl">Daily goal</div></div>
+  </div>`;
+
+  h += `<div class="vsec">Daily breakdown</div>`;
+  h += `<div class="scard" style="padding:4px 16px">`;
+  h += `<div class="prot-hist-bar-wrap">`;
+  days.forEach(d => {
+    const barPct = Math.min(d.total / maxBar * 100, 100);
+    h += `<div class="prot-hist-bar-row">
+      <div class="prot-hist-day">${d.label}</div>
+      <div class="prot-hist-bar-track">
+        <div class="prot-hist-bar-fill${d.hit?' hit':''}" style="width:${barPct}%"></div>
+      </div>
+      <div class="prot-hist-val">${d.total}g</div>
+    </div>`;
+  });
+  h += `</div></div>`;
+  return h;
+}
+
+// ── Hook into showView ────────────────────────────────────────────────────────
+const _origShowView = showView;
+showView = function(v){
+  document.getElementById('prot-view').classList.toggle('on', v === 'protein');
+  document.getElementById('nav-protein').classList.toggle('on', v === 'protein');
+  if(v === 'protein'){
+    // Hide other views
+    document.getElementById('today-view').style.display = 'none';
+    document.getElementById('hist-view').classList.remove('on');
+    document.getElementById('set-view').classList.remove('on');
+    document.getElementById('main-hdr').style.display = 'none';
+    document.getElementById('dstrip').style.display = 'none';
+    ['today','history','settings'].forEach(n => document.getElementById('nav-'+n).classList.remove('on'));
+    renderProtein();
+  } else {
+    document.getElementById('prot-view').classList.remove('on');
+    document.getElementById('nav-protein').classList.remove('on');
+    _origShowView(v);
+  }
+};
+
+// ── Hook protein stats into history render ────────────────────────────────────
+const _origRenderHistory = renderHistoryView;
+renderHistoryView = function(){
+  _origRenderHistory();
+  const el = document.getElementById('hist-content');
+  if(el) el.innerHTML += renderProteinHistory();
+};
+
+// ── Hook protein goal into settings ──────────────────────────────────────────
+const _origRenderSettings = renderSettingsView;
+renderSettingsView = function(){
+  _origRenderSettings();
+  // Inject protein goal row into cycle card if not already there
+  const cycleCard = document.querySelector('#set-view .scard');
+  if(cycleCard && !document.getElementById('set-prot-goal-row')){
+    const row = document.createElement('div');
+    row.id = 'set-prot-goal-row';
+    row.className = 'srow';
+    row.innerHTML = `<span class="srow-key">Daily protein goal</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input id="set-prot-goal-input" type="number" min="50" max="400"
+          style="width:64px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;padding:5px 8px;text-align:center;outline:none"
+          value="${getProtGoal()}" onchange="setProtGoal(parseInt(this.value)||165)">
+        <span style="font-size:13px;color:var(--muted)">g</span>
+      </div>`;
+    cycleCard.appendChild(row);
+  }
+};
+
 </script>
 </body>
 </html>
