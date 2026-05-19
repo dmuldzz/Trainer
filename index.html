@@ -262,7 +262,7 @@ body{color:var(--text);font-family:'Barlow',sans-serif;font-size:15px;max-width:
 .prot-form-row{display:flex;gap:8px;margin-bottom:8px}
 .prot-input{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:10px 12px;outline:none;-webkit-appearance:none}
 .prot-input:focus{border-color:var(--text2)}
-.prot-input.grams{width:80px;flex:none}
+.prot-input.grams{width:62px;flex:none}
 .prot-add-btn{background:var(--text);color:var(--bg);border:none;border-radius:var(--r-sm);padding:10px 16px;font-family:'Barlow',sans-serif;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
 .prot-add-btn:active{opacity:.8}
 
@@ -411,8 +411,8 @@ body{color:var(--text);font-family:'Barlow',sans-serif;font-size:15px;max-width:
     <div class="prot-form">
       <div class="prot-form-row">
         <input class="prot-input" id="prot-food" placeholder="Food or drink" type="text" style="flex:2">
-        <input class="prot-input grams" id="prot-grams" placeholder="Protein g" type="number" min="0" max="999">
-        <input class="prot-input grams" id="prot-cals" placeholder="kcal" type="number" min="0" max="9999">
+        <input class="prot-input grams" id="prot-grams" placeholder="g" type="number" min="0" max="999">
+        <input class="prot-input grams" id="prot-cals" placeholder="cal" type="number" min="0" max="9999">
       </div>
       <button class="prot-add-btn" style="width:100%" onclick="addProteinEntry()">Add</button>
     </div>
