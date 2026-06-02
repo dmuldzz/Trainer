@@ -647,10 +647,11 @@ const K = {
 function lsGet(k,def){try{const v=localStorage.getItem(k);return v===null?def:JSON.parse(v)}catch(e){return def}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
-function getMorning(wk,dow){return lsGet(K.morning,{})[`w${wk}d${dow}`]||{}}
-function setMorning(wk,dow,obj){const all=lsGet(K.morning,{});all[`w${wk}d${dow}`]=obj;lsSet(K.morning,all)}
-function getGym(wk,dow){return lsGet(K.gym,{})[`w${wk}d${dow}`]||[]}
-function setGym(wk,dow,arr){const all=lsGet(K.gym,{});all[`w${wk}d${dow}`]=arr;lsSet(K.gym,all);recordHistory(wk,dow,arr)}
+function dayKey(wk,dow,cycle){return `c${cycle||currentCycle()}w${wk}d${dow}`;}
+function getMorning(wk,dow){return lsGet(K.morning,{})[dayKey(wk,dow)]||{}}
+function setMorning(wk,dow,obj){const all=lsGet(K.morning,{});all[dayKey(wk,dow)]=obj;lsSet(K.morning,all)}
+function getGym(wk,dow){return lsGet(K.gym,{})[dayKey(wk,dow)]||[]}
+function setGym(wk,dow,arr){const all=lsGet(K.gym,{});all[dayKey(wk,dow)]=arr;lsSet(K.gym,all);recordHistory(wk,dow,arr)}
 function getRunDist(){return lsGet(K.run,'2.6k')}
 function setRunDist(v){lsSet(K.run,v);renderDay();renderSettingsView()}
 
@@ -659,10 +660,11 @@ function recordHistory(wk,dow,arr){
   if(!plan||!plan.exercises) return;
   const total=plan.exercises.length, done=arr.filter(Boolean).length;
   if(done===0) return;
+  const cycle=currentCycle();
   const hist=lsGet(K.history,[]);
-  const key=`w${wk}d${dow}`;
+  const key=dayKey(wk,dow,cycle);
   const idx=hist.findIndex(h=>h.key===key);
-  const entry={key,wk,dow,title:plan.title,label:plan.label,type:plan.type,done,total,date:new Date().toISOString()};
+  const entry={key,cycle,wk,dow,title:plan.title,label:plan.label,type:plan.type,done,total,date:new Date().toISOString()};
   if(idx>=0)hist[idx]=entry;else hist.push(entry);
   lsSet(K.history,hist);
 }
@@ -674,12 +676,17 @@ function pi(wk,dow){return(wk-1)*7+dow}
 function todayDow(){const d=new Date().getDay();return d===0?6:d-1}
 function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
 function calcPos(){
-  if(!startDate) return {wk:1,dow:0};
+  if(!startDate) return {wk:1,dow:0,cycle:1};
   const now=new Date();now.setHours(0,0,0,0);
   const start=parseDate(startDate);
   const diff=Math.floor((now-start)/86400000);
+  const cycle=Math.floor(diff/14)+1; // 1-indexed, increments every 14 days
   const cd=((diff%14)+14)%14;
-  return {wk:cd<7?1:2,dow:cd%7};
+  return {wk:cd<7?1:2,dow:cd%7,cycle};
+}
+
+function currentCycle(){
+  return calcPos().cycle;
 }
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
@@ -724,7 +731,7 @@ function updateHeader(){
   const now=new Date();
   document.getElementById('hdr-date').textContent=`${DAYS[todayDow()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
   const pos=calcPos();
-  document.getElementById('hdr-cycle').textContent=`Week ${pos.wk}, Day ${pos.dow+1} of cycle`;
+  document.getElementById('hdr-cycle').textContent=`Cycle ${pos.cycle} · Week ${pos.wk}, Day ${pos.dow+1}`;
 }
 
 // ══ STRIP ════════════════════════════════════════════════════════════════════
@@ -967,6 +974,45 @@ function openPopup(planI){
 function closePopupOutside(e){if(e.target===document.getElementById('popup'))closePopup();}
 function closePopup(){document.getElementById('popup').classList.remove('on');}
 
+function renderSettingsView(){
+  const hist=lsGet(K.history,[]);
+  const pos=calcPos();
+  const el=id=>document.getElementById(id);
+  if(el('set-sessions')) el('set-sessions').textContent=hist.length;
+  if(el('set-exercises')) el('set-exercises').textContent=hist.reduce((s,h)=>s+h.done,0);
+  if(el('set-pos')) el('set-pos').textContent=`Cycle ${pos.cycle}, Week ${pos.wk}, Day ${pos.dow+1}`;
+  updateHeader();
+  renderSettingsNutrition();
+}
+
+function renderSettingsNutrition(){
+  const setView=document.getElementById('set-view');
+  if(!setView||document.getElementById('nutr-goals-section')) return;
+  const DAY_NAMES=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const calGoals=getCalGoals();
+  const protGoal=getProtGoal();
+  let h=`<div class="vsec" id="nutr-goals-section">Nutrition Goals</div><div class="scard">`;
+  h+=`<div class="srow"><span class="srow-key">Daily protein goal</span>
+    <div style="display:flex;align-items:center;gap:6px">
+      <input id="set-prot-goal-input" type="number" min="50" max="400"
+        style="width:60px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;padding:5px 8px;text-align:center;outline:none"
+        value="${protGoal}" onchange="setProtGoal(parseInt(this.value)||165)">
+      <span style="font-size:11px;font-weight:300;color:var(--muted2)">g</span>
+    </div></div>`;
+  for(let i=0;i<7;i++){
+    h+=`<div class="srow"><span class="srow-key">${DAY_NAMES[i]} calories</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="number" min="500" max="6000"
+          style="width:70px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;padding:5px 8px;text-align:center;outline:none"
+          value="${calGoals[i]}" onchange="setCalGoal(${i},parseInt(this.value)||2000)">
+        <span style="font-size:11px;font-weight:300;color:var(--muted2)">kcal</span>
+      </div></div>`;
+  }
+  h+=`</div>`;
+  const dangerBtn=setView.querySelector('.danger-btn');
+  if(dangerBtn){const w=document.createElement('div');w.innerHTML=h;setView.insertBefore(w,dangerBtn);}
+}
+
 // ══ VIEWS ════════════════════════════════════════════════════════════════════
 function showView(v){
   document.getElementById('today-view').style.display=v==='today'?'':'none';
@@ -987,27 +1033,36 @@ function renderHistoryView(){
   const morningAll=lsGet(K.morning,{});
   const gymAll=lsGet(K.gym,{});
   const pos=calcPos();
-  const daysPassed=(pos.wk-1)*7+pos.dow+1;
-  const elapsed=PLAN.slice(0,daysPassed);
+  const curCycle=pos.cycle;
 
-  // Tally runs & abs from morning checks
-  let runDone=0,absDone=0;
-  Object.values(morningAll).forEach(d=>{if(d.run)runDone++;if(d.abs)absDone++;});
-  const possRuns=elapsed.filter(p=>p.morning&&p.morning.some(m=>m.key==='run')).length;
-  const possAbs=elapsed.filter(p=>p.morning&&p.morning.some(m=>m.key==='abs')).length;
-
-  // Tally gym sessions completed by type
-  const tally={push:{done:0,poss:0},pull:{done:0,poss:0},legs:{done:0,poss:0}};
-  elapsed.forEach(p=>{
-    if(p.exercises&&p.exercises.length>0&&tally[p.type]){
-      tally[p.type].poss++;
-      const arr=gymAll[`w${p.wk}d${p.dow}`]||[];
-      if(arr.filter(Boolean).length===p.exercises.length) tally[p.type].done++;
-    }
-  });
-
+  // ── Overview stats (all time) ────────────────────────────────────────────
   const totalSessions=hist.length;
   const totalEx=hist.reduce((s,h)=>s+h.done,0);
+
+  // Tally morning items across all cycles
+  let runDone=0,absDone=0;
+  Object.values(morningAll).forEach(d=>{if(d.run)runDone++;if(d.abs)absDone++;});
+
+  // Tally gym by type across all cycles
+  const tally={push:{done:0,poss:0},pull:{done:0,poss:0},legs:{done:0,poss:0}};
+  // Count possible sessions: each full cycle completes 14 days, plus current partial
+  const fullCycles=curCycle-1;
+  const partialDays=(pos.wk-1)*7+pos.dow+1;
+  // Possible runs/abs per cycle = 10 (Mon-Fri x2 weeks, excluding Sat/Sun)
+  const possRuns=fullCycles*10+PLAN.slice(0,partialDays).filter(p=>p.morning&&p.morning.some(m=>m.key==='run')).length;
+  const possAbs=fullCycles*10+PLAN.slice(0,partialDays).filter(p=>p.morning&&p.morning.some(m=>m.key==='abs')).length;
+
+  // Gym sessions possible
+  for(let c=1;c<=curCycle;c++){
+    const daysInCycle = c<curCycle ? 14 : partialDays;
+    PLAN.slice(0,daysInCycle).forEach(p=>{
+      if(p.exercises&&p.exercises.length>0&&tally[p.type]){
+        tally[p.type].poss++;
+        const arr=gymAll[dayKey(p.wk,p.dow,c)]||[];
+        if(arr.filter(Boolean).length===p.exercises.length) tally[p.type].done++;
+      }
+    });
+  }
 
   let h='';
   h+=`<div class="stat-grid">
@@ -1015,7 +1070,7 @@ function renderHistoryView(){
     <div class="stat-card"><div class="stat-val">${totalEx}</div><div class="stat-lbl">Exercises done</div></div>
   </div>`;
 
-  h+=`<div class="vsec">Completion by activity</div>`;
+  h+=`<div class="vsec">Completion by activity — all time</div>`;
   h+=`<div class="scard" style="padding:0 16px">`;
   [
     {name:'Runs',done:runDone,poss:possRuns},
@@ -1028,425 +1083,53 @@ function renderHistoryView(){
   });
   h+=`</div>`;
 
-  h+=`<div class="vsec">Sessions</div>`;
-  if(hist.length===0){
-    h+=`<div class="empty"><div class="empty-g">○</div>No gym sessions logged yet.<br>Complete exercises to start tracking.</div>`;
+  // ── Per-cycle breakdown ────────────────────────────────────────────────────
+  // Group history entries by cycle, show newest first
+  const cycles={};
+  hist.forEach(entry=>{
+    const c=entry.cycle||1;
+    if(!cycles[c]) cycles[c]=[];
+    cycles[c].push(entry);
+  });
+
+  const cycleNums=Object.keys(cycles).map(Number).sort((a,b)=>b-a);
+
+  if(cycleNums.length===0){
+    h+=`<div class="vsec">Sessions</div><div class="empty"><div class="empty-g">○</div>No gym sessions logged yet.</div>`;
   } else {
-    [...hist].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(entry=>{
-      const pct=Math.round(entry.done/entry.total*100);
-      const d=new Date(entry.date);
-      const dateStr=d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
-      h+=`<div class="hist-card">
-        <div class="hist-top">
-          <div><div class="hist-name">W${entry.wk} ${entry.label} — ${entry.title}</div><div class="hist-date">${dateStr}</div></div>
-          <div class="hist-pct">${pct}%</div>
+    cycleNums.forEach(c=>{
+      const entries=cycles[c].sort((a,b)=>new Date(b.date)-new Date(a.date));
+      const cycleTotal=entries.reduce((s,e)=>s+e.done,0);
+      const cycleSessions=entries.length;
+      const isCurrentCycle=c===curCycle;
+      h+=`<div class="vsec">Cycle ${c}${isCurrentCycle?' — current':''}</div>`;
+      h+=`<div class="scard" style="padding:0 16px;margin-bottom:8px">
+        <div class="act-row">
+          <span class="act-name">Sessions logged</span>
+          <span class="act-count">${cycleSessions}</span>
         </div>
-        <div class="hist-bar"><div class="hist-bar-fill" style="width:${pct}%"></div></div>
-        <div class="hist-detail">${entry.done} of ${entry.total} exercises</div>
+        <div class="act-row">
+          <span class="act-name">Exercises completed</span>
+          <span class="act-count">${cycleTotal}</span>
+        </div>
       </div>`;
+      entries.forEach(entry=>{
+        const pct=Math.round(entry.done/entry.total*100);
+        const d=new Date(entry.date);
+        const dateStr=d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+        h+=`<div class="hist-card">
+          <div class="hist-top">
+            <div><div class="hist-name">W${entry.wk} ${entry.label} — ${entry.title}</div><div class="hist-date">${dateStr}</div></div>
+            <div class="hist-pct">${pct}%</div>
+          </div>
+          <div class="hist-bar"><div class="hist-bar-fill" style="width:${pct}%"></div></div>
+          <div class="hist-detail">${entry.done} of ${entry.total} exercises</div>
+        </div>`;
+      });
     });
   }
 
   document.getElementById('hist-content').innerHTML=h;
 }
 
-// ══ SETTINGS VIEW ════════════════════════════════════════════════════════════
-function renderSettingsView(){
-  const hist=lsGet(K.history,[]);
-  document.getElementById('set-sessions').textContent=hist.length;
-  document.getElementById('set-exercises').textContent=hist.reduce((s,h)=>s+h.done,0);
-  const pos=calcPos();
-  document.getElementById('set-pos').textContent=`Week ${pos.wk}, Day ${pos.dow+1}`;
-  const cur=getRunDist();
-  document.getElementById('set-run-current').textContent=cur;
-  document.getElementById('run-opts').innerHTML=RUN_OPTS.map(o=>`
-    <div class="run-opt${o.val===cur?' sel':''}" onclick="setRunDist('${o.val}')">
-      <div class="run-opt-val">${o.val}</div>
-      <div class="run-opt-lbl">${o.label}</div>
-    </div>`).join('');
-  updateHeader();
-}
 
-function resetCycle(){
-  if(confirm('Change cycle start date? Your history will be kept.')){
-    localStorage.removeItem(K.start);
-    startDate=null;
-    document.getElementById('app').classList.remove('on');
-    const d=new Date();
-    document.getElementById('start-input').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    document.getElementById('setup').classList.add('on');
-  }
-}
-
-function clearAll(){
-  if(confirm('Delete all data? This cannot be undone.')){
-    Object.values(K).forEach(k=>localStorage.removeItem(k));
-    location.reload();
-  }
-}
-
-init();
-
-// ══ NUTRITION (Protein + Calories) ═════════════════════════════════════════
-const PK = {
-  goal:     'tr_prot_goal',    // number — protein goal (shared all days)
-  calGoals: 'tr_cal_goals',    // {0:2200,1:2200,...6:2400} — per weekday (0=Mon)
-  log:      'tr_prot_log',     // {dateKey:[{id,name,grams,cals,time}]}
-  quick:    'tr_prot_quick',   // [{id,name,grams,cals}]
-};
-
-const PROT_CIRCUMFERENCE = 2 * Math.PI * 70;
-const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-const DEFAULT_CAL_GOALS = [2200,2200,2200,2200,2000,2400,2400];
-
-function getProtGoal(){ return lsGet(PK.goal, 165); }
-function setProtGoal(v){ lsSet(PK.goal, v); }
-
-function getCalGoals(){
-  const stored = lsGet(PK.calGoals, {});
-  const goals = {};
-  for(let i=0;i<7;i++) goals[i] = stored[i] !== undefined ? stored[i] : DEFAULT_CAL_GOALS[i];
-  return goals;
-}
-function setCalGoal(dow, val){ // dow: 0=Mon...6=Sun
-  const goals = getCalGoals();
-  goals[dow] = val;
-  lsSet(PK.calGoals, goals);
-}
-function getTodayCalGoal(){
-  const dow = todayDow(); // 0=Mon...6=Sun
-  return getCalGoals()[dow];
-}
-
-// Date key — resets at 3am EDT
-function protDayKey(){
-  const now = new Date();
-  const adjusted = new Date(now.getTime() - 3*60*60*1000);
-  return adjusted.toLocaleDateString('en-CA');
-}
-
-function getProtLog(){
-  const all = lsGet(PK.log, {});
-  return all[protDayKey()] || [];
-}
-function setProtLog(entries){
-  const all = lsGet(PK.log, {});
-  all[protDayKey()] = entries;
-  lsSet(PK.log, all);
-}
-function getAllProtLog(){ return lsGet(PK.log, {}); }
-
-function getQuickItems(){ return lsGet(PK.quick, [
-  {id:'q1', name:'Protein Shake', grams:35, cals:180},
-  {id:'q2', name:'Chicken Breast', grams:45, cals:220},
-  {id:'q3', name:'Greek Yogurt', grams:17, cals:100},
-  {id:'q4', name:'Eggs (2)', grams:12, cals:140},
-  {id:'q5', name:'Cottage Cheese', grams:25, cals:110},
-]); }
-function setQuickItems(items){ lsSet(PK.quick, items); }
-
-function protTotal(entries){ return entries.reduce((s,e)=>s+Number(e.grams||0),0); }
-function calTotal(entries){ return entries.reduce((s,e)=>s+Number(e.cals||0),0); }
-
-function renderProtein(){
-  const entries = getProtLog();
-  const protGoal = getProtGoal();
-  const calGoal = getTodayCalGoal();
-  const totalProt = protTotal(entries);
-  const totalCals = calTotal(entries);
-  const protPct = Math.min(totalProt/protGoal, 1);
-  const calPct  = Math.min(totalCals/calGoal, 1);
-
-  const el = id => document.getElementById(id);
-
-  // Protein bar
-  if(el('prot-bar-fill')) el('prot-bar-fill').style.width = (protPct*100)+'%';
-  if(el('prot-total')) el('prot-total').textContent = totalProt;
-  if(el('prot-goal-lbl')) el('prot-goal-lbl').textContent = protGoal;
-  if(el('prot-pct')) el('prot-pct').textContent = Math.round(protPct*100)+'% of goal';
-
-  // Calorie bar
-  if(el('cal-bar-fill')){
-    el('cal-bar-fill').style.width = (calPct*100)+'%';
-    el('cal-bar-fill').classList.toggle('over', calPct>=1);
-  }
-  if(el('cal-total')) el('cal-total').textContent = totalCals;
-  if(el('cal-goal-lbl')) el('cal-goal-lbl').textContent = calGoal;
-  if(el('cal-pct')) el('cal-pct').textContent = Math.round(calPct*100)+'% of goal';
-
-  // Date
-  const now = new Date();
-  if(el('prot-date-lbl')){
-    el('prot-date-lbl').textContent = now.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
-  }
-
-  renderQuickGrid();
-
-  // Log
-  const logEl = el('prot-log');
-  if(!logEl) return;
-  if(entries.length===0){
-    logEl.innerHTML = '<div class="prot-empty">No entries yet today.</div>';
-  } else {
-    logEl.innerHTML = entries.map((e,i)=>`
-      <div class="prot-entry">
-        <div>
-          <div class="prot-entry-name">${e.name||'—'}</div>
-          <div class="prot-entry-time">${e.time}</div>
-        </div>
-        <div class="prot-entry-right">
-          <div class="nutr-entry-macros">
-            <div style="text-align:right">
-              <div class="nutr-entry-macro">${e.grams||0}g</div>
-              <div class="nutr-entry-macro-lbl">protein</div>
-            </div>
-            <div style="text-align:right;border-left:1px solid var(--border);padding-left:10px">
-              <div class="nutr-entry-macro">${e.cals||0}</div>
-              <div class="nutr-entry-macro-lbl">kcal</div>
-            </div>
-          </div>
-          <button class="prot-del" onclick="deleteProtEntry(${i})">×</button>
-        </div>
-      </div>`).join('');
-  }
-}
-
-function renderQuickGrid(){
-  const items = getQuickItems();
-  const el = document.getElementById('quick-grid');
-  if(!el) return;
-  el.innerHTML = items.map(item=>`
-    <div class="quick-btn" onclick="quickAdd('${item.id}')">
-      <div class="quick-btn-name">${item.name}</div>
-      <div class="quick-btn-g">${item.grams}g</div>
-      <div style="font-size:9px;font-weight:300;color:var(--muted2);margin-top:1px;letter-spacing:.04em">${item.cals||0} kcal</div>
-    </div>`).join('') +
-    `<div class="quick-add-btn" onclick="openQuickManager()">+</div>`;
-}
-
-function quickAdd(id){
-  const item = getQuickItems().find(i=>i.id===id);
-  if(!item) return;
-  addEntry(item.name, item.grams, item.cals||0);
-}
-
-function addProteinEntry(){
-  const nameEl  = document.getElementById('prot-food');
-  const gramsEl = document.getElementById('prot-grams');
-  const calsEl  = document.getElementById('prot-cals');
-  const name  = (nameEl.value||'').trim();
-  const grams = parseInt(gramsEl.value)||0;
-  const cals  = parseInt(calsEl.value)||0;
-  if(!name || (grams===0 && cals===0)) return;
-  addEntry(name, grams, cals);
-  nameEl.value=''; gramsEl.value=''; calsEl.value='';
-}
-
-function addEntry(name, grams, cals){
-  const entries = getProtLog();
-  const now = new Date();
-  const time = now.toLocaleTimeString('en-CA',{hour:'numeric',minute:'2-digit'});
-  entries.push({id:Date.now(), name, grams:Number(grams), cals:Number(cals||0), time});
-  setProtLog(entries);
-  renderProtein();
-}
-
-function deleteProtEntry(i){
-  const entries = getProtLog();
-  entries.splice(i,1);
-  setProtLog(entries);
-  renderProtein();
-}
-
-// ── Quick item manager ────────────────────────────────────────────────────────
-function openQuickManager(){
-  const items = getQuickItems();
-  let body='<div style="padding-bottom:8px">';
-  if(!items.length) body+='<div style="color:var(--muted);font-size:13px;padding:12px 0">No saved items yet.</div>';
-  items.forEach(item=>{
-    body+=`<div class="qa-row">
-      <span class="qa-name">${item.name}</span>
-      <span class="qa-g">${item.grams}g</span>
-      <span style="font-size:12px;color:var(--muted2);margin-right:6px">${item.cals||0}kcal</span>
-      <button class="qa-del" onclick="deleteQuickItem('${item.id}')">×</button>
-    </div>`;
-  });
-  body+=`</div>
-  <div class="qa-form" style="flex-wrap:wrap;gap:6px">
-    <input class="qa-input" id="qa-name" placeholder="Item name" type="text" style="flex:1;min-width:120px">
-    <input class="qa-input g" id="qa-grams" placeholder="Prot g" type="number" min="1" max="999" style="width:64px">
-    <input class="qa-input g" id="qa-cals-input" placeholder="kcal" type="number" min="0" max="9999" style="width:64px">
-    <button class="qa-save" onclick="saveQuickItem()">Add</button>
-  </div>`;
-  document.getElementById('pop-eye').textContent='Nutrition';
-  document.getElementById('pop-title').textContent='Quick Add Items';
-  document.getElementById('pop-sub').textContent='Tap × to remove, or add a new item below';
-  document.getElementById('pop-body').innerHTML=body;
-  document.getElementById('popup').classList.add('on');
-}
-
-function deleteQuickItem(id){
-  setQuickItems(getQuickItems().filter(i=>i.id!==id));
-  openQuickManager(); renderQuickGrid();
-}
-
-function saveQuickItem(){
-  const name  = (document.getElementById('qa-name').value||'').trim();
-  const grams = parseInt(document.getElementById('qa-grams').value)||0;
-  const cals  = parseInt(document.getElementById('qa-cals-input').value)||0;
-  if(!name) return;
-  const items = getQuickItems();
-  items.push({id:'q'+Date.now(), name, grams, cals});
-  setQuickItems(items);
-  openQuickManager(); renderQuickGrid();
-}
-
-// ── Nutrition history stats ───────────────────────────────────────────────────
-function renderProteinHistory(){
-  const allLog = getAllProtLog();
-  const protGoal = getProtGoal();
-  const calGoals = getCalGoals();
-
-  const days = [];
-  for(let i=6;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    const key=d.toLocaleDateString('en-CA');
-    const dow=(d.getDay()===0?6:d.getDay()-1);
-    const entries=allLog[key]||[];
-    const prot=protTotal(entries);
-    const cals=calTotal(entries);
-    const calGoal=calGoals[dow]||2000;
-    days.push({
-      label:d.toLocaleDateString('en-CA',{weekday:'short'}),
-      key,prot,cals,calGoal,
-      protHit:prot>=protGoal,
-      calHit:cals>=calGoal,
-    });
-  }
-
-  const protDaysHit=days.filter(d=>d.protHit).length;
-  const calDaysHit=days.filter(d=>d.calHit).length;
-  const avgProt=Math.round(days.reduce((s,d)=>s+d.prot,0)/7);
-  const avgCals=Math.round(days.reduce((s,d)=>s+d.cals,0)/7);
-  const bestProt=Math.max(...days.map(d=>d.prot));
-  const bestCals=Math.max(...days.map(d=>d.cals));
-  const maxProtBar=Math.max(protGoal*1.2,bestProt,1);
-
-  let h='';
-  h+=`<div class="vsec">Nutrition — last 7 days</div>`;
-  h+=`<div class="stat-grid">
-    <div class="stat-card"><div class="stat-val">${protDaysHit}/7</div><div class="stat-lbl">Protein goal days</div></div>
-    <div class="stat-card"><div class="stat-val">${avgProt}g</div><div class="stat-lbl">Avg daily protein</div></div>
-    <div class="stat-card"><div class="stat-val">${calDaysHit}/7</div><div class="stat-lbl">Calorie goal days</div></div>
-    <div class="stat-card"><div class="stat-val">${avgCals}</div><div class="stat-lbl">Avg daily kcal</div></div>
-  </div>`;
-
-  h+=`<div class="vsec">Protein — daily</div>`;
-  h+=`<div class="scard" style="padding:4px 16px"><div class="prot-hist-bar-wrap">`;
-  days.forEach(d=>{
-    const barPct=Math.min(d.prot/maxProtBar*100,100);
-    h+=`<div class="prot-hist-bar-row">
-      <div class="prot-hist-day">${d.label}</div>
-      <div class="prot-hist-bar-track"><div class="prot-hist-bar-fill${d.protHit?' hit':''}" style="width:${barPct}%"></div></div>
-      <div class="prot-hist-val">${d.prot}g</div>
-    </div>`;
-  });
-  h+=`</div></div>`;
-
-  h+=`<div class="vsec">Calories — daily</div>`;
-  h+=`<div class="scard" style="padding:4px 16px"><div class="prot-hist-bar-wrap">`;
-  days.forEach(d=>{
-    const maxCalBar=Math.max(d.calGoal*1.2,bestCals,1);
-    const barPct=Math.min(d.cals/maxCalBar*100,100);
-    h+=`<div class="prot-hist-bar-row">
-      <div class="prot-hist-day">${d.label}</div>
-      <div class="prot-hist-bar-track"><div class="prot-hist-bar-fill${d.calHit?' hit':''}" style="width:${barPct}%"></div></div>
-      <div class="prot-hist-val">${d.cals}</div>
-    </div>`;
-  });
-  h+=`</div></div>`;
-
-  return h;
-}
-
-// ── Hook into showView ────────────────────────────────────────────────────────
-const _origShowView = showView;
-showView = function(v){
-  document.getElementById('prot-view').classList.toggle('on', v === 'protein');
-  document.getElementById('nav-protein').classList.toggle('on', v === 'protein');
-  if(v === 'protein'){
-    // Hide other views
-    document.getElementById('today-view').style.display = 'none';
-    document.getElementById('hist-view').classList.remove('on');
-    document.getElementById('set-view').classList.remove('on');
-    document.getElementById('main-hdr').style.display = 'none';
-    document.getElementById('dstrip').style.display = 'none';
-    ['today','history','settings'].forEach(n => document.getElementById('nav-'+n).classList.remove('on'));
-    renderProtein();
-  } else {
-    document.getElementById('prot-view').classList.remove('on');
-    document.getElementById('nav-protein').classList.remove('on');
-    _origShowView(v);
-  }
-};
-
-// ── Hook protein stats into history render ────────────────────────────────────
-const _origRenderHistory = renderHistoryView;
-renderHistoryView = function(){
-  _origRenderHistory();
-  const el = document.getElementById('hist-content');
-  if(el) el.innerHTML += renderProteinHistory();
-};
-
-// ── Hook nutrition goals into settings ───────────────────────────────────────
-const _origRenderSettings = renderSettingsView;
-renderSettingsView = function(){
-  _origRenderSettings();
-  const setView = document.getElementById('set-view');
-  if(!setView || document.getElementById('nutr-goals-section')) return;
-
-  const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const calGoals = getCalGoals();
-  const protGoal = getProtGoal();
-
-  let html = `<div class="vsec" id="nutr-goals-section">Nutrition Goals</div>`;
-  html += `<div class="scard">`;
-
-  // Protein goal — one for all days
-  html += `<div class="srow">
-    <span class="srow-key">Daily protein goal</span>
-    <div style="display:flex;align-items:center;gap:6px">
-      <input id="set-prot-goal-input" type="number" min="50" max="400"
-        style="width:60px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;padding:5px 8px;text-align:center;outline:none"
-        value="${protGoal}" onchange="setProtGoal(parseInt(this.value)||165)">
-      <span style="font-size:11px;font-weight:300;color:var(--muted2)">g</span>
-    </div>
-  </div>`;
-
-  // Per-day calorie goals
-  for(let i=0;i<7;i++){
-    html += `<div class="srow">
-      <span class="srow-key">${DAY_NAMES[i]} calories</span>
-      <div style="display:flex;align-items:center;gap:6px">
-        <input type="number" min="500" max="6000"
-          style="width:70px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;padding:5px 8px;text-align:center;outline:none"
-          value="${calGoals[i]}" onchange="setCalGoal(${i},parseInt(this.value)||2000)">
-        <span style="font-size:11px;font-weight:300;color:var(--muted2)">kcal</span>
-      </div>
-    </div>`;
-  }
-
-  html += `</div>`;
-
-  // Insert before the danger button
-  const dangerBtn = setView.querySelector('.danger-btn');
-  if(dangerBtn){
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
-    setView.insertBefore(wrapper, dangerBtn);
-  }
-};
-
-</script>
-</body>
-</html>
